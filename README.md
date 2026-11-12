@@ -3,10 +3,8 @@
 **Your network, watched from something you already own: free on the device, and your iPhone
 gets the alert.**
 
-<!-- The badges render once github.com/pingkit/agent, the Docker Hub mirror pingkit/agent and
-     github.com/pingkit/ha-apps exist (Paul creates them at launch; packaging.md "Paul owns"). -->
-[![Image size](https://img.shields.io/docker/image-size/pingkit/agent/1?label=image)](https://hub.docker.com/r/pingkit/agent)
-[![Docker pulls](https://img.shields.io/docker/pulls/pingkit/agent)](https://hub.docker.com/r/pingkit/agent)
+<!-- The badges render once github.com/pingkit/agent and github.com/pingkit/ha-apps are public
+     (at launch). No Docker Hub mirror: the image is on ghcr.io only (Paul 2026-11-12). -->
 [![Release](https://img.shields.io/github/v/release/pingkit/agent)](https://github.com/pingkit/agent/releases)
 [![Add the repository to your Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fpingkit%2Fha-apps)
 
