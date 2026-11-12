@@ -1,0 +1,51 @@
+name: Problem with PingKit Agent
+description: Something does not work the way the documentation says.
+labels: [triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not paste device names, MAC addresses, IP
+        addresses of your devices, your claim code or anything from your iPhone's device
+        list: this tracker is public. The diagnostics block below leaves those out.
+  - type: dropdown
+    id: host
+    attributes:
+      label: Where does the agent run?
+      options:
+        - Docker on Linux (compose.yaml)
+        - Synology
+        - QNAP
+        - Unraid
+        - TrueNAS SCALE
+        - Another NAS or home server
+        - Raspberry Pi (install script)
+        - Home Assistant app
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        On the agent's Diagnostics page (http://<host>:7474/diagnostics), select the **Copy diagnostics** text and
+        paste the text here unchanged. It carries the version, the platform, the pairing
+        state, the ping and Bonjour modes and recent error kinds, and no device names.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Describe it without device names; "a printer" or "my NAS" is enough.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lines (optional)
+      description: |
+        `docker logs pingkit-agent --tail 50` or `journalctl -u pingkit-agent -n 50`.
+        Check them for names and addresses before you paste.
+      render: text

@@ -1,0 +1,76 @@
+# PingKit Agent on any other Linux NAS or home server (plan section 6.2): TrueNAS SCALE
+# 24.10 or later (Apps > Discover Apps > Custom App > Install via YAML), OpenMediaVault
+# (the Compose plugin), CasaOS (App Store > Custom Install > Import), Portainer (Stacks >
+# Add stack), or plain `docker compose up -d` on Debian, Ubuntu or Fedora.
+#
+# The agent watches your own network from that box, which should be one that stays on. One
+# edit: PINGKIT_CLAIM_CODE below, the code your iPhone shows under Agents > Add an Agent.
+#
+#   - network_mode: host is the point; a bridge network hides your devices from the agent.
+#     The status page is http://<the box's address>:7474/.
+#   - Keep the named volume: a bind-mounted folder must be owned by 65532:65532 first
+#     (sudo chown 65532:65532 /path/to/folder), or the agent cannot write its state.
+#   - Ping (optional): on the host, sudo sysctl -w net.ipv4.ping_group_range="65532 65532",
+#     made permanent with the same line (without sudo sysctl -w) in
+#     /etc/sysctl.d/60-pingkit-agent.conf. Without it the agent uses ARP and TCP checks.
+#   - Docker Desktop on Windows or macOS cannot see your devices (its host network stops
+#     at layer 4); use a Linux host.
+# To update: docker compose pull && docker compose up -d (or your NAS's "pull and redeploy").
+
+services:
+  pingkit-agent:
+    # :1 moves to each new 1.x release. To run exactly one signed build, pin the digest
+    # from the release notes instead: ghcr.io/pingkit/agent:1.0.0@sha256:<digest>
+    image: ghcr.io/pingkit/agent:1
+    container_name: pingkit-agent
+    restart: unless-stopped
+    # The agent drains within 15 s of SIGTERM; Docker's default of 10 s would cut that short.
+    stop_grace_period: 20s
+
+    # The one privilege: the host's network namespace. It is what lets the agent read the
+    # neighbour (ARP) table and hear mDNS and SSDP from your devices. With it, port
+    # mappings do not apply: the status page is on the host's port 7474 directly.
+    network_mode: host
+
+    # Nothing else: no added capabilities, a read-only root file system, a non-root user,
+    # no privilege escalation. The agent writes only to /data and a small /tmp.
+    read_only: true
+    cap_drop:
+      - ALL
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    mem_limit: 256m
+    pids_limit: 64
+
+    volumes:
+      - pingkit-agent-data:/data
+
+    environment:
+      PINGKIT_CLAIM_CODE: ""        # the 8-character code from your iPhone; used once
+      # The code stays readable in `docker inspect` after it is used. It works once and
+      # expires 10 minutes after the iPhone shows it, so a leftover copy pairs nothing; clear
+      # the line after pairing if you prefer, or type the code on the status page instead.
+      # Every other setting has a default. The common ones:
+      # PINGKIT_PORT: "7474"          # status page (HTTP)
+      # PINGKIT_API_PORT: "7475"      # the iPhone's connection (HTTPS)
+      # PINGKIT_BIND: "0.0.0.0"       # the status page's address; the iPhone API always listens on every interface
+      # PINGKIT_STATUS_PAGE: "off"    # no status page at all (the health check still works)
+      # PINGKIT_IFACE: "eth0"         # watch this interface instead of the default route's
+      # TZ: "Europe/Berlin"           # times on the status page
+
+    # Optional: ICMP echo (ping) for devices and the internet check. Without it the agent
+    # still works, using ARP and TCP checks instead. The switch is one host setting, which
+    # grants nothing else:
+    #
+    #   On the host (not in this file):  sudo sysctl -w net.ipv4.ping_group_range="65532 65532"
+    #   (Docker refuses net.* sysctls under network_mode: host, so it cannot go here.)
+    #
+    # Adding the NET_RAW capability does not turn ping on: the agent opens ICMP datagram
+    # sockets only, never a raw socket, and the kernel admits those by the setting above
+    # alone (measured, docs/headless-agent/measurements.md). Leave capabilities dropped.
+
+volumes:
+  pingkit-agent-data:

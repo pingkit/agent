@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://pingkit.app/.well-known/security.txt
+    about: Report a security problem privately, not in an issue.
+  - name: PingKit app support
+    url: https://pingkit.app/support/
+    about: Questions about the iPhone or Mac app.

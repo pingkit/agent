@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+  PingKit Agent, an Unraid Docker template for manual install (headless agent plan,
+  section 6.2). It is not in Community Applications: CA does not take a closed-source app
+  from its own maintainer. Install it by saving this file as
+  /boot/config/plugins/dockerMan/templates-user/my-pingkit-agent.xml, then Docker, Add
+  Container, and pick pingkit-agent from the Template list.
+  Host networking and the status port, with the compose file's posture carried in
+  ExtraParams: read-only root, every capability dropped, user 65532, no privilege
+  escalation, a small noexec /tmp, 256 MB and 64 tasks. The state is a named Docker volume
+  (pingkit-agent-data) because a new appdata folder is created owned by root, which user
+  65532 cannot write; see the Overview for the appdata route.
+-->
+<Container version="2">
+  <Name>pingkit-agent</Name>
+  <Repository>ghcr.io/pingkit/agent:1</Repository>
+  <Registry>https://github.com/pingkit/agent/pkgs/container/agent</Registry>
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/pingkit/agent/issues</Support>
+  <Project>https://pingkit.app/agent/</Project>
+  <Overview>PingKit Agent watches your own network from your Unraid server, which stays on, and sends PingKit on your iPhone an alert when the internet goes down (about three minutes) and comes back, when a new device joins, and, if you turn it on, when a device goes offline (up to 45 minutes at the default sweep). Pair it with the code your iPhone shows under Agents, Add an Agent. iPhone alerts need PingKit Guardian. The status page is on port 7474. Host networking is the one privilege: it lets the agent read the neighbour (ARP) table and hear mDNS and SSDP. To keep the state in appdata instead of the Docker volume, create /mnt/user/appdata/pingkit-agent owned by 65532:65532 (chown 65532:65532 in the Unraid terminal) and replace the --mount option in Extra Parameters with -v /mnt/user/appdata/pingkit-agent:/data. Without ping permission on the host (net.ipv4.ping_group_range), the agent uses ARP and TCP checks.</Overview>
+  <Category>Network:Management Tools:</Category>
+  <WebUI>http://[IP]:[PORT:7474]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/pingkit/agent/main/compose/unraid-template.xml</TemplateURL>
+  <Icon>https://pingkit.app/agent/icon.png</Icon>
+  <ExtraParams>--read-only --cap-drop=ALL --user=65532:65532 --security-opt=no-new-privileges:true --tmpfs=/tmp:rw,noexec,nosuid,nodev,size=16m --memory=256m --pids-limit=64 --stop-timeout=20 --mount=type=volume,source=pingkit-agent-data,target=/data</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>A Linux host network. PingKit on an iPhone to pair it.</Requires>
+  <Config Name="Claim code" Target="PINGKIT_CLAIM_CODE" Default="" Mode="" Description="The 8-character code your iPhone shows under Agents, Add an Agent. It works once and expires 10 minutes after your iPhone shows it, though it stays visible in the container settings; clear it after pairing, or type it on the status page instead." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Status page port" Target="7474" Default="7474" Mode="tcp" Description="The status page (HTTP). With host networking the agent listens on this port directly; change PINGKIT_PORT to move it." Type="Port" Display="always" Required="false" Mask="false">7474</Config>
+  <Config Name="iPhone connection port" Target="7475" Default="7475" Mode="tcp" Description="The HTTPS port your iPhone connects to the agent on. Change PINGKIT_API_PORT to move it." Type="Port" Display="advanced" Required="false" Mask="false">7475</Config>
+  <Config Name="Interface" Target="PINGKIT_IFACE" Default="" Mode="" Description="The interface to watch, for example br0. Empty: the default route's interface." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+</Container>

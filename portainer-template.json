@@ -1,0 +1,15 @@
+{
+  "type": 3,
+  "title": "PingKit Agent",
+  "name": "pingkit-agent",
+  "description": "Watches your own network from a Linux host that stays on and alerts PingKit on your iPhone when the internet goes down, a new device joins or a device goes offline. Source: https://github.com/pingkit/agent",
+  "categories": ["Monitoring", "Networking"],
+  "platform": "linux",
+  "logo": "https://raw.githubusercontent.com/pingkit/agent/main/icon.png",
+  "restart_policy": "unless-stopped",
+  "repository": {
+    "url": "https://github.com/pingkit/agent",
+    "stackfile": "compose/compose.nas.yaml"
+  },
+  "note": "Before you deploy, open PingKit on your iPhone, go to Agents, tap Add an Agent and keep the 8-character code it shows; it works once, for 10 minutes. After the stack starts, open <code>http://&lt;your-host&gt;:7474/</code> and type the code on the status page. The iPhone connects on port 7475. <b>Host networking</b> is the one privilege, and it is required: the agent reads the host's neighbour (ARP) table and hears mDNS and SSDP from your devices, which a bridge network hides. Every capability is dropped, the root file system is read-only and it runs as user 65532. If your Portainer admin blocks host networking for regular users, an admin has to deploy it. Linux hosts only: Docker Desktop on Windows or macOS cannot see your devices. State lives in the <code>pingkit-agent-data</code> volume. Docs: <a href=\"https://pingkit.app/agent/docker/\" target=\"_blank\">pingkit.app/agent/docker</a>"
+}

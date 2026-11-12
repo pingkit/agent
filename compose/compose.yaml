@@ -1,0 +1,79 @@
+# PingKit Agent for Docker (headless agent plan, section 5.6 and 6.2).
+#
+# Edit one line: PINGKIT_CLAIM_CODE, the code the iPhone shows under Agents > Add an Agent.
+# Then: docker compose up -d. To update: docker compose pull && docker compose up -d.
+#
+# Linux hosts only. Docker Desktop on Windows and macOS does not give a container the
+# host's network at layer 2, so the agent cannot see your devices there.
+
+services:
+  pingkit-agent:
+    # :1 moves to each new 1.x release. To run exactly one signed build, pin the digest
+    # from the release notes instead: ghcr.io/pingkit/agent:1.0.0@sha256:<digest>
+    image: ghcr.io/pingkit/agent:1
+    container_name: pingkit-agent
+    restart: unless-stopped
+    # The agent drains within 15 s of SIGTERM; Docker's default of 10 s would cut that short.
+    stop_grace_period: 20s
+
+    # The one privilege: the host's network namespace. It is what lets the agent read the
+    # neighbour (ARP) table and hear mDNS and SSDP from your devices. With it, port
+    # mappings do not apply: the status page is on the host's port 7474 directly.
+    network_mode: host
+
+    # Nothing else: no added capabilities, a read-only root file system, a non-root user,
+    # no privilege escalation. The agent writes only to /data and a small /tmp.
+    read_only: true
+    cap_drop:
+      - ALL
+    user: "65532:65532"
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    mem_limit: 256m
+    pids_limit: 64
+
+    volumes:
+      - pingkit-agent-data:/data
+
+    environment:
+      PINGKIT_CLAIM_CODE: ""        # the 8-character code from your iPhone; used once
+      # The code stays readable in `docker inspect` after it is used. It works once and
+      # expires 10 minutes after the iPhone shows it, so a leftover copy pairs nothing; clear
+      # the line after pairing if you prefer, or type the code on the status page instead.
+      # Every other setting has a default. The common ones:
+      # PINGKIT_PORT: "7474"          # status page (HTTP)
+      # PINGKIT_API_PORT: "7475"      # the iPhone's connection (HTTPS)
+      # PINGKIT_BIND: "0.0.0.0"       # the status page's address; the iPhone API always listens on every interface
+      # PINGKIT_STATUS_PAGE: "off"    # no status page at all (the health check still works)
+      # PINGKIT_IFACE: "eth0"         # watch this interface instead of the default route's
+      # TZ: "Europe/Berlin"           # times on the status page
+      # PINGKIT_NOTIFY_URLS: "ntfy://192.168.1.5/home-net"  # alerts to your own services, free
+      # A URL with a token works here too, with a warning: it shows in `docker inspect`, so
+      # PINGKIT_NOTIFY_URLS_FILE is the better place. docs/headless-agent/notifications.md has
+      # every service.
+
+    # Optional: ICMP echo (ping) for devices and the internet check. Without it the agent
+    # still works, using ARP and TCP checks instead. The switch is one host setting, which
+    # grants nothing else:
+    #
+    #   On the host (not in this file):  sudo sysctl -w net.ipv4.ping_group_range="65532 65532"
+    #   (Docker refuses net.* sysctls under network_mode: host, so it cannot go here.)
+    #
+    # Adding the NET_RAW capability does not turn ping on: the agent opens ICMP datagram
+    # sockets only, never a raw socket, and the kernel admits those by the setting above
+    # alone (measured, docs/headless-agent/measurements.md). Leave capabilities dropped.
+
+    # Optional: device names from DHCP broadcasts. Off by default. It needs port 67, and a
+    # capability cannot give it that here: Docker clears the effective set of a non-root user,
+    # so the switch is one host setting, which lets any local program bind ports from 67 up:
+    #
+    #   On the host (not in this file):  sudo sysctl -w net.ipv4.ip_unprivileged_port_start=67
+    #   Then, under environment above:   PINGKIT_DHCP_LISTEN: "1"
+    #
+    # If a DHCP server on this host already holds port 67 the agent turns the listener off and
+    # carries on without it, and its diagnostics page says so.
+
+volumes:
+  pingkit-agent-data:
