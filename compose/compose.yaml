@@ -33,9 +33,19 @@ services:
       - /tmp:rw,noexec,nosuid,nodev,size=16m
     mem_limit: 256m
     pids_limit: 64
+    # The same two caps again, in the form some NAS dashboards read (CasaOS's Import sets
+    # the whole machine's memory without it). Docker Compose needs both to match the lines
+    # above, or it refuses the file.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 64
 
     volumes:
-      - pingkit-agent-data:/data
+      - type: volume
+        source: pingkit-agent-data
+        target: /data
 
     environment:
       PINGKIT_CLAIM_CODE: ""        # the 8-character code from your iPhone; used once

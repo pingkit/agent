@@ -37,8 +37,8 @@
 # placeholder and refuses to install.
 set -eu
 
-PINGKIT_VERSION="0.0.0"
-PINGKIT_SHA256_AARCH64="unpinned"
+PINGKIT_VERSION="1.0.0"
+PINGKIT_SHA256_AARCH64="4ee3f1bf413f86f4a1f5e113c253f041bf9a27ecfca58f7e0a1299e3a5697b8e"
 PINGKIT_RELEASE_BASE="https://github.com/pingkit/agent/releases/download"
 PINGKIT_MANIFEST_URL="https://pingkit.app/agent/latest.json"
 

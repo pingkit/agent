@@ -39,6 +39,25 @@ never a raw socket, and the kernel admits those by `ping_group_range` alone (mea
 `docs/headless-agent/measurements.md`). Where the host setting cannot be changed, the
 agent runs without ping.
 
+**TrueNAS SCALE.** System > Advanced Settings > Sysctl > Add: variable
+`net.ipv4.ping_group_range`, value `0 2147483647`. TrueNAS keeps it after a restart (its own
+`ping_group_range` is `1 0`, so ping is off until this is set). The range covers group 65532,
+which `compose.nas.yaml` runs as, and group 568, which the TrueNAS catalog app runs as.
+
+**Proxmox, in an unprivileged container (LXC).** Set it inside the container, as root:
+
+```
+sysctl -w net.ipv4.ping_group_range="65532 65532"
+echo 'net.ipv4.ping_group_range = 65532 65532' > /etc/sysctl.d/60-pingkit-agent.conf
+```
+
+The second line keeps it after the container restarts. The container refuses
+`0 2147483647` (its user namespace maps only its own groups), and setting it on the Proxmox
+host does not reach the container, which has network settings of its own. (Measured on
+Proxmox VE 9.2, 2026-11-13: the container starts at `65534 65534`.)
+
+Without the setting, on either, the agent still works and checks with TCP instead.
+
 ## Not supported
 
 Docker Desktop on Windows and macOS: its host network stops at layer 4, so the agent

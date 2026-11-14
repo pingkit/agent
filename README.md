@@ -67,6 +67,13 @@ short of them. Use a Linux host. The full file with every option, and the files 
 QNAP, TrueNAS SCALE, OpenMediaVault, CasaOS, Portainer and Unraid, are in
 [`compose/`](compose/).
 
+**Ping is optional.** Without it the agent checks with ARP and TCP. To allow it, set
+`net.ipv4.ping_group_range` to `65532 65532` on the host (`/etc/sysctl.d/60-pingkit-agent.conf`
+keeps it). On TrueNAS SCALE use System > Advanced Settings > Sysctl with `0 2147483647`; in an
+unprivileged Proxmox container, set `65532 65532` inside the container, as root, since the
+container refuses `0 2147483647` and the Proxmox host's setting does not reach it.
+[`compose/README.md`](compose/README.md) has the steps.
+
 ## Raspberry Pi
 
 64-bit Raspberry Pi OS on a Raspberry Pi 4 or 5. The script refuses a 32-bit system.
